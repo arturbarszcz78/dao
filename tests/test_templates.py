@@ -10,7 +10,7 @@ from dao.config import lint_public_copy, load_config
 ROOT = Path(__file__).resolve().parents[1]
 TPL = ROOT / "dao" / "templates"
 PUBLIC = ["home.html", "proposals.html", "proposal.html", "proposal_new.html", "seats.html", "decisions.html",
-          "inbox.html", "log.html", "log_entry.html", "base.html"]
+          "inbox.html", "log.html", "log_entry.html", "live.html", "base.html"]
 
 
 def test_templates_parse():

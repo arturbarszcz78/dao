@@ -100,6 +100,13 @@ class EventLog:
         return list((await db.execute(q)).scalars().all())
 
     @staticmethod
+    async def since(db: AsyncSession, after: int, limit: int = 200, public_only: bool = True) -> list[Event]:
+        q = select(Event).where(Event.index > after)
+        if public_only:
+            q = q.where(Event.public.is_(True))
+        return list((await db.execute(q.order_by(Event.index.asc()).limit(limit))).scalars().all())
+
+    @staticmethod
     async def get(db: AsyncSession, index: int) -> Event | None:
         return (await db.execute(select(Event).where(Event.index == index))).scalar_one_or_none()
 

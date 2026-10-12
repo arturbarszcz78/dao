@@ -121,6 +121,14 @@ async def log_page(request: Request, offset: int = 0, kind: str | None = None, r
     return render(request, "log.html", {**common, "events": rows, "offset": offset, "kind": kind, "ref": ref})
 
 
+@router.get("/live", response_class=HTMLResponse)
+async def live_page(request: Request):
+    async with session() as db:
+        common = await _common(db)
+        rows = await EventLog.page(db, 0, 25)
+    return render(request, "live.html", {**common, "events": rows})
+
+
 @router.get("/log/{index}", response_class=HTMLResponse)
 async def log_entry(request: Request, index: int):
     async with session() as db:

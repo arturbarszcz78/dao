@@ -7,11 +7,13 @@ import json
 import time
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from sse_starlette.sse import EventSourceResponse
 
 from .. import __version__
 from ..auth import SignedRequest, require_seat, verify_signed
 from ..canonical import DOMAIN_INBOX_HTTP, DOMAIN_MEMBER_ACTION, DOMAIN_PROPOSAL, DOMAIN_VOTE
+from ..db import session
 from ..log import EventLog, event_to_dict
 from ..services import inbox as inbox_svc
 from ..services import pause as pause_svc
@@ -229,27 +231,42 @@ async def log_get(index: int, db: Db):
 
 
 @router.get("/events")
-async def events_stream(request: Request, ctx: Ctx):
-    """Server-sent events: every public log entry as it is appended (this process only; the
-    worker's events arrive via the periodic head poll)."""
-    q: asyncio.Queue = asyncio.Queue(maxsize=1000)
-    ctx.events.subscribe(q)
+async def events_stream(request: Request, ctx: Ctx, db: Db, after: int | None = None):
+    """Server-sent events. Each public log entry is sent as `event: entry` (kind inside the data) as it
+    lands in the database, whichever process wrote it; `event: ping` every 15 s. Resumes from
+    `Last-Event-ID` or `?after=<index>`. Browsers navigating here directly are sent to /live."""
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept and "text/event-stream" not in accept:
+        return RedirectResponse("/live", status_code=302)
+
+    head = await EventLog.head(db)
+    resume = request.headers.get("last-event-id")
+    last_index = int(resume) if resume and resume.lstrip("-").isdigit() else (after if after is not None else head.index)
+    wake: asyncio.Queue = asyncio.Queue(maxsize=1000)
+    ctx.events.subscribe(wake)  # same-process appends shortcut the poll interval
 
     async def gen():
+        nonlocal last_index
+        idle_since = time.monotonic()
         try:
-            last_index = -1
-            while True:
-                if await request.is_disconnected():
-                    break
-                try:
-                    ev = await asyncio.wait_for(q.get(), timeout=15)
-                    if ev.public:
-                        last_index = ev.index
-                        yield {"event": ev.kind, "id": str(ev.index), "data": json.dumps(event_to_dict(ev))}
-                except asyncio.TimeoutError:
+            while not await request.is_disconnected():
+                async with session() as s:
+                    rows = await EventLog.since(s, last_index)
+                for ev in rows:
+                    last_index = ev.index
+                    idle_since = time.monotonic()
+                    yield {"event": "entry", "id": str(ev.index), "data": json.dumps(event_to_dict(ev))}
+                if time.monotonic() - idle_since >= 15:
+                    idle_since = time.monotonic()
                     yield {"event": "ping", "data": json.dumps({"ts": time.time_ns(), "last": last_index})}
+                try:
+                    await asyncio.wait_for(wake.get(), timeout=3)
+                    while not wake.empty():
+                        wake.get_nowait()
+                except asyncio.TimeoutError:
+                    pass
         finally:
-            ctx.events.unsubscribe(q)
+            ctx.events.unsubscribe(wake)
 
     return EventSourceResponse(gen())
 

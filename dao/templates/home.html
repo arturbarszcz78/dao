@@ -30,7 +30,7 @@
 <table>
   {% for e in events %}<tr><td class="num"><a href="/log/{{ e.index }}">#{{ e.index }}</a></td><td>{{ e.kind }}</td><td class="mute">{{ e.actor }}</td><td class="num mute">{{ e.ts|ns }}</td></tr>{% endfor %}
 </table>
-<p><a href="/log">Full log</a> · <a href="/v1/log/verify">verify the chain</a> · <a href="/v1/events">live stream</a></p>
+<p><a href="/log">Full log</a> · <a href="/v1/log/verify">verify the chain</a> · <a href="/live">live</a></p>
 
 <h2>Questions</h2>
 {% for f in copy.faq %}<details><summary>{{ f.q }}</summary><p>{{ f.a }}</p></details>{% endfor %}
