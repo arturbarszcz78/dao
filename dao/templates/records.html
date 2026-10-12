@@ -21,8 +21,8 @@
 
 <h2>Keyset</h2>
 {% if keyset.error %}<p class="mute">Could not read the keyset from the node: {{ keyset.error }}</p>{% else %}
-<p class="small">Threshold {{ keyset.threshold }} of {{ keyset.keys|length }}. The company holds no copy of these keys; the harness assembles blocks and counts signatures only.</p>
-<table>{% for k in keyset.keys %}<tr><td><code>{{ k }}</code></td><td>{% for s in cfg.human_seats if s.public_key == k|lower %}{{ s.name }} ({{ s.id }}){% endfor %}</td></tr>{% endfor %}</table>{% endif %}
+<p class="small">Threshold {{ keyset.threshold }} of {{ keyset['keys']|length }}. The company holds no copy of these keys; the harness assembles blocks and counts signatures only.</p>
+<table>{% for k in keyset['keys'] %}<tr><td><code>{{ k }}</code></td><td>{% for s in cfg.human_seats if s.public_key == k|lower %}{{ s.name }} ({{ s.id }}){% endfor %}</td></tr>{% endfor %}</table>{% endif %}
 
 <h2>{{ legal.members_label }} and officers</h2>
 <table><tr><th>Seat</th><th>Name</th><th>Capacity</th><th>Public key</th><th>Rights</th></tr>
@@ -46,7 +46,7 @@
 
 <h2>{{ legal.treasury_label }}</h2>
 <table><tr><th>Account</th><th>Address</th><th>Balances</th><th>Keyset</th></tr>
-{% for name, t in treasury.items() %}<tr><td>{{ name }}</td><td><code>{{ t.address or "not configured" }}</code></td><td class="small">{% for a, v in t.balances.items() %}{{ v|xe }} {{ a }}<br>{% endfor %}</td><td class="small">{% if t.keyset %}{{ t.keyset.threshold }} of {{ t.keyset.keys|length }}{% endif %}</td></tr>{% endfor %}</table>
+{% for name, t in treasury.items() %}<tr><td>{{ name }}</td><td><code>{{ t.address or "not configured" }}</code></td><td class="small">{% for a, v in t.balances.items() %}{{ v|xe }} {{ a }}<br>{% endfor %}</td><td class="small">{% if t.keyset %}{{ t.keyset.threshold }} of {{ t.keyset['keys']|length }}{% endif %}</td></tr>{% endfor %}</table>
 <p class="small mute">The harness holds no treasury key. Movements are member actions, recorded here after the fact.</p>
 
 <h2>Anchors</h2>

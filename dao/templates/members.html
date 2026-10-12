@@ -46,7 +46,7 @@
 <div id="rsmsg" class="msg" hidden></div>
 
 <h2>State-chain signing sessions</h2>
-<p class="small mute">Two steps. First approve the ops (durable). Then sign the block built at the live tip; if the tip moves before enough signatures land, the block is rebuilt and you sign again. Keyset: {{ keyset.threshold }} of {{ keyset.keys|length }}.</p>
+<p class="small mute">Two steps. First approve the ops (durable). Then sign the block built at the live tip; if the tip moves before enough signatures land, the block is rebuilt and you sign again. Keyset: {{ keyset.threshold }} of {{ keyset['keys']|length }}.</p>
 <div class="row"><button class="ghost" id="openreg">Open registry session (write dao.registry)</button><button class="ghost" id="openanchor">Open anchor session now</button></div>
 <div id="sessmsg" class="msg" hidden></div>
 {% for s in sessions %}{% set d = sess_dict(s) %}

@@ -123,7 +123,7 @@ model_candidates:
   - Mistral Small 4
   - Kimi K3
 
-accounts:
+accounts:                         # per deployment: fill on the server from `dao keys init`; the signer is authoritative
   dao: ""                         # the DAO's public account: directory-registered, receives chat
   fee: ""                         # receives proposal fees; refunds or burns them
   treasury: ""                    # hash-derived multisig; human keyholders only
