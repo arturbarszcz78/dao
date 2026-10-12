@@ -45,13 +45,38 @@ def test_sign_block_roundtrip():
     assert validate_pow(bytes.fromhex(b.hash), b.pow_nonce, TEST_DIFFICULTY)
 
 
-def test_statechain_genesis_and_oracle_hash(statechain):
-    for key in ("genesis", "oracle"):
-        d = statechain[key]
-        blk = StateBlock.from_json(d)
-        assert hash_state_block(blk) == d["hash"], key
-        for sig in d["signatures"]:
-            verify_state_signature(d["hash"], sig)
+def test_statechain_oracle_block_hash(statechain):
+    """Blocks the node itself marshals (oracle, DAO) carry compact value bytes; re-compacting the API
+    output reproduces them exactly."""
+    d = statechain["oracle"]
+    blk = StateBlock.from_json(d)
+    assert hash_state_block(blk) == d["hash"]
+    for sig in d["signatures"]:
+        verify_state_signature(d["hash"], sig)
+
+
+def _pretty_nested(value, indent: int, depth: int) -> str:
+    """A JSON value as it appears inside a pretty-printed document at nesting `depth`: first line
+    unindented (it follows `"value": `), continuation lines carry the enclosing indentation."""
+    import json
+    lines = json.dumps(value, indent=indent, ensure_ascii=False).split("\n")
+    pad = " " * (indent * depth)
+    return lines[0] + "".join("\n" + pad + ln for ln in lines[1:])
+
+
+def test_statechain_genesis_hash_is_over_document_bytes(statechain):
+    """Finding: the node hashes op values as the exact bytes in the genesis document (json.RawMessage
+    preserves whitespace), and genesis.json is pretty-printed with 4-space indent, values at depth 3.
+    The API serves the values compacted, so genesis cannot be re-hashed from API output alone. Our
+    canonical encoding is right; the value bytes must be the document's."""
+    d = statechain["genesis"]
+    compact = StateBlock.from_json(d)
+    assert hash_state_block(compact) != d["hash"], "if this starts matching, the node changed how it hashes genesis"
+    ops = [StateOp(o["action"], o["key"], _pretty_nested(o["value"], 4, 3)) for o in d["ops"]]
+    doc = StateBlock(index=d["index"], prev_hash=d["prev_hash"], ops=ops, timestamp=d["timestamp"])
+    assert hash_state_block(doc) == d["hash"]
+    for sig in d.get("signatures", []):
+        verify_state_signature(d["hash"], sig)
 
 
 def test_statechain_dao_blocks_if_any(statechain):
