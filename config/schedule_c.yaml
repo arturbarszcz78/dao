@@ -1,0 +1,129 @@
+# Schedule C: seats, classes, who runs each, model IDs, keys, repository.
+# Human seats carry an ed25519 public key (64 hex). The account address is derived from it.
+# Agent seats are designated by member resolution after filing; until then they are listed
+# as "designed" and the harness runs in members-direct mode.
+#
+# Keyset / treasury / pause keys are NOT in this file. The keyset is read from the chain
+# (sys.dao_keyset). Treasury is an on-chain multisig account referenced by address.
+
+version: 1
+mode: members-direct              # members-direct | ensemble
+
+repository:
+  url: https://github.com/xeprotocol/dao
+  licence: GPL-3.0-or-later
+  audit: none completed
+
+human_seats:
+  - id: founder-a
+    name: Joseph Michael Denne
+    kind: member
+    role: Founder
+    public_key: ""                # fill at key ceremony
+    may:
+      - reserved_matters
+      - pause
+      - sign_statechain
+      - sign_treasury
+      - sign_resolutions
+  - id: founder-b
+    name: William James Lebens
+    kind: member
+    role: Founder
+    public_key: ""
+    may:
+      - reserved_matters
+      - pause
+      - sign_statechain
+      - sign_treasury
+      - sign_resolutions
+  - id: cto
+    name: Adam Dean
+    kind: officer                 # member | officer; see BRIEF §16 item 1
+    role: CTO
+    public_key: ""
+    may:
+      - sign_treasury
+      - sign_operations
+      - operational_review
+
+agent_seats:
+  - id: orchestrator
+    role: Orchestrator
+    class: orchestrator
+    status: designed              # designed | designated | active | retired
+    model: ""                     # pinned at designation
+    account: ""                   # on-chain address once keys exist
+    tool_scopes: [chain.read, web.read, log.read, log.write.analysis, chat.send, portal.vote]
+  - id: orchestrator-backup
+    role: Orchestrator (backup)
+    class: orchestrator
+    status: designed
+    model: ""
+    account: ""
+    tool_scopes: [chain.read, web.read, log.read, log.write.analysis, chat.send, portal.vote]
+  - id: research
+    role: Research & Intelligence
+    class: specialist
+    status: designed
+    model: ""
+    account: ""
+    tool_scopes: [chain.read, web.read, log.read, log.write.analysis, portal.vote]
+  - id: financial
+    role: Financial & Accounting
+    class: specialist
+    status: designed
+    model: ""
+    account: ""
+    tool_scopes: [chain.read, log.read, log.write.analysis, portal.vote]
+  - id: legal
+    role: Legal & Compliance
+    class: specialist
+    status: designed
+    model: ""
+    account: ""
+    tool_scopes: [log.read, log.write.analysis, portal.vote]
+  - id: governance
+    role: Proposal & Governance
+    class: specialist
+    status: designed
+    model: ""
+    account: ""
+    tool_scopes: [chain.read, log.read, log.write.analysis, portal.vote]
+  - id: execution
+    role: Execution & Operations
+    class: specialist
+    status: designed
+    model: ""
+    account: ""
+    tool_scopes: [chain.read, log.read, log.write.analysis, tx.prepare, block.prepare, chat.send, portal.vote]
+  - id: risk
+    role: Risk & Safety
+    class: specialist
+    status: designed
+    model: ""
+    account: ""
+    tool_scopes: [chain.read, web.read, log.read, log.write.analysis, portal.vote]
+  - id: community
+    role: Community & Sentiment
+    class: specialist
+    status: designed
+    optional: true
+    model: ""
+    account: ""
+    tool_scopes: [web.read, log.read, log.write.analysis, chat.send, portal.vote]
+
+# Models likely in the harness (tools, not members). Pinned IDs go on the seats above at designation.
+model_candidates:
+  - Grok 4.7
+  - Claude Fable 5.1
+  - GPT-6 Astra          # hard limit: never receives tx.*, block.* or tool.* scopes
+  - GLM-5.3
+  - Qwen3.6 27B
+  - Mistral Small 4
+  - Kimi K3
+
+accounts:
+  dao: ""                         # the DAO's public account: directory-registered, receives chat
+  fee: ""                         # receives proposal fees; refunds or burns them
+  treasury: ""                    # hash-derived multisig; human keyholders only

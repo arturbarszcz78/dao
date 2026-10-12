@@ -1,0 +1,31 @@
+"""Every template parses; public templates pass the copy lint."""
+
+import re
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader
+
+from dao.config import lint_public_copy, load_config
+
+ROOT = Path(__file__).resolve().parents[1]
+TPL = ROOT / "dao" / "templates"
+PUBLIC = ["home.html", "proposals.html", "proposal.html", "proposal_new.html", "seats.html", "decisions.html",
+          "inbox.html", "log.html", "log_entry.html", "base.html"]
+
+
+def test_templates_parse():
+    env = Environment(loader=FileSystemLoader(str(TPL)))
+    for p in sorted(TPL.glob("*.html")):
+        env.parse(p.read_text(encoding="utf-8"), filename=str(p))
+
+
+def test_public_templates_pass_copy_lint():
+    cfg = load_config(ROOT / "config")
+    extra = []
+    for name in PUBLIC:
+        text = (TPL / name).read_text(encoding="utf-8")
+        text = re.sub(r"{[{%#].*?[}%#]}", " ", text, flags=re.S)
+        text = re.sub(r"<script.*?</script>", " ", text, flags=re.S)
+        text = re.sub(r"<[^>]+>", " ", text)
+        extra.append(text)
+    assert lint_public_copy(cfg, extra) == []

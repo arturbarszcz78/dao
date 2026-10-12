@@ -1,0 +1,181 @@
+"""Server-rendered pages. Public pages speak the public register; /records and /members speak the
+legal register. Writes happen from the browser via the signed JSON API, never through forms."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from pathlib import Path
+
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
+from xe.amounts import from_micro
+from xe.client import XeError
+
+from . import __version__
+from .context import get_context
+from .db import session
+from .log import EventLog, event_to_dict
+from .services import inbox as inbox_svc
+from .services import pause as pause_svc
+from .services import portal, records, resolutions, sessions
+
+router = APIRouter(include_in_schema=False)
+templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+
+
+def _fmt_ns(ns: int | None) -> str:
+    if not ns:
+        return ""
+    return datetime.fromtimestamp(ns / 1e9, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+
+def _short(h: str | None, n: int = 10) -> str:
+    return (h[:n] + "…") if h and len(h) > n else (h or "")
+
+
+templates.env.filters["ns"] = _fmt_ns
+templates.env.filters["short"] = _short
+templates.env.filters["xe"] = lambda v: from_micro(int(v or 0))
+
+
+def render(request: Request, name: str, ctx: dict, status_code: int = 200) -> HTMLResponse:
+    c = get_context()
+    base = {
+        "request": request, "copy": c.config.copy_public, "legal": c.config.copy_legal, "badge": c.node.badge,
+        "network_id": c.node.network_id, "version": __version__, "base_url": c.settings.public_base_url,
+        "node_url": c.settings.xe_node_url, "mode": c.config.mode,
+    }
+    return templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
+
+
+async def _common(db):
+    head = await EventLog.head(db)
+    return {"paused": await pause_svc.active(db), "head": head}
+
+
+@router.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+        open_props = await portal.list_proposals(db, "open", 0, 6)
+        recent = await EventLog.page(db, 0, 12)
+        counts = await portal.counts(db)
+    return render(request, "home.html", {
+        **common, "proposals": open_props, "events": recent, "counts": counts, "rules": c.config.pinned_rules(),
+        "dao_account": inbox_svc.dao_account(c), "fee_account": portal.fee_account(c), "seats": c.config,
+    })
+
+
+@router.get("/proposals", response_class=HTMLResponse)
+async def proposals_page(request: Request, status: str | None = None, offset: int = 0):
+    async with session() as db:
+        common = await _common(db)
+        rows = await portal.list_proposals(db, status, offset, 50)
+        counts = await portal.counts(db)
+    return render(request, "proposals.html", {**common, "proposals": rows, "status": status, "counts": counts, "offset": offset})
+
+
+@router.get("/proposals/new", response_class=HTMLResponse)
+async def proposal_new(request: Request):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+    return render(request, "proposal_new.html", {**common, "rules": c.config.pinned_rules(), "fee_account": portal.fee_account(c)})
+
+
+@router.get("/proposals/{h}", response_class=HTMLResponse)
+async def proposal_page(request: Request, h: str):
+    async with session() as db:
+        common = await _common(db)
+        pr = await portal.get(db, h)
+        votes = await portal.votes_for(db, pr.hash)
+        events = await EventLog.page(db, 0, 50, ref=f"proposal:{pr.hash}")
+    return render(request, "proposal.html", {**common, "p": pr, "votes": votes, "tally": portal.tally(pr, votes), "events": events})
+
+
+@router.get("/seats", response_class=HTMLResponse)
+async def seats_page(request: Request):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+    return render(request, "seats.html", {**common, "cfg": c.config})
+
+
+@router.get("/decisions", response_class=HTMLResponse)
+async def decisions_page(request: Request):
+    async with session() as db:
+        common = await _common(db)
+        decided = await portal.list_proposals(db, "decided", 0, 100)
+        closed = await portal.list_proposals(db, "closed", 0, 100)
+    return render(request, "decisions.html", {**common, "decided": decided, "closed": closed})
+
+
+@router.get("/log", response_class=HTMLResponse)
+async def log_page(request: Request, offset: int = 0, kind: str | None = None, ref: str | None = None):
+    async with session() as db:
+        common = await _common(db)
+        rows = await EventLog.page(db, offset, 100, kind, ref)
+    return render(request, "log.html", {**common, "events": rows, "offset": offset, "kind": kind, "ref": ref})
+
+
+@router.get("/log/{index}", response_class=HTMLResponse)
+async def log_entry(request: Request, index: int):
+    async with session() as db:
+        common = await _common(db)
+        ev = await EventLog.get(db, index)
+    if ev is None or not ev.public:
+        return render(request, "error.html", {**common, "status": 404, "detail": "no such entry"}, status_code=404)
+    return render(request, "log_entry.html", {**common, "e": ev, "d": event_to_dict(ev)})
+
+
+@router.get("/inbox", response_class=HTMLResponse)
+async def inbox_page(request: Request):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+        rows = [m for m in await inbox_svc.list_messages(db, None, 100) if m.status != "spam"]
+    return render(request, "inbox.html", {**common, "messages": rows, "dao_account": inbox_svc.dao_account(c)})
+
+
+@router.get("/records", response_class=HTMLResponse)
+async def records_page(request: Request):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+        res = await resolutions.list_resolutions(db)
+        anchors = await records.anchors(db, 10)
+        hist = await pause_svc.history(db)
+    try:
+        ks = await c.chain.dao_keyset()
+    except XeError as e:
+        ks = {"error": str(e)}
+    onchain = await records.onchain_registry(c)
+    treasury = await records.treasury(c)
+    return render(request, "records.html", {
+        **common, "cfg": c.config, "keyset": ks, "registry_intended": records.registry_value(c), "registry_onchain": onchain,
+        "resolutions": res, "anchors": anchors, "pause_history": hist, "treasury": treasury, "reserved": sorted(resolutions.RESERVED_MATTERS),
+        "res_dict": lambda r: resolutions.to_dict(r, c.config), "git_commit": c.settings.git_commit,
+    })
+
+
+@router.get("/members", response_class=HTMLResponse)
+async def members_page(request: Request):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+        res = await resolutions.list_resolutions(db)
+        sess = await sessions.list_sessions(db)
+        msgs = await inbox_svc.list_messages(db, None, 100)
+        closed = await portal.list_proposals(db, "closed", 0, 50)
+    try:
+        ks = await c.chain.dao_keyset()
+    except XeError as e:
+        ks = {"error": str(e), "keys": [], "threshold": 0}
+    return render(request, "members.html", {
+        **common, "cfg": c.config, "resolutions": res, "sessions": sess, "messages": msgs, "closed": closed, "keyset": ks,
+        "reserved": sorted(resolutions.RESERVED_MATTERS), "ordinary": sorted(resolutions.ORDINARY_MATTERS),
+        "res_dict": lambda r: resolutions.to_dict(r, c.config), "sess_dict": sessions.to_dict,
+    })

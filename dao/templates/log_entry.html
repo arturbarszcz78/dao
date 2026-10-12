@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Log #{{ e.index }}{% endblock %}
+{% block content %}
+<p class="small"><a href="/log">← {{ copy.labels.log }}</a></p>
+<h1>#{{ e.index }} · {{ e.kind }}</h1>
+<p class="sub">{{ e.actor }} · {{ e.ts|ns }}{% if e.ref %} · <a href="/log?ref={{ e.ref }}">{{ e.ref }}</a>{% endif %}</p>
+<table>
+  <tr><th>hash</th><td><code>{{ e.hash }}</code></td></tr>
+  <tr><th>prev_hash</th><td><code>{{ e.prev_hash }}</code>{% if e.index > 0 %} · <a href="/log/{{ e.index - 1 }}">previous</a>{% endif %}</td></tr>
+  <tr><th>signer</th><td><code>{{ e.signer or "—" }}</code></td></tr>
+  <tr><th>signature</th><td><code>{{ e.signature or "—" }}</code></td></tr>
+</table>
+<h2>Payload</h2>
+<pre>{{ e.payload|tojson(indent=1) }}</pre>
+<p class="small mute">hash = sha256("xe-dao/event/v1\0" || canonical_json({index, ts, kind, actor, payload, prev_hash})). <a href="/v1/log/{{ e.index }}">JSON</a></p>
+{% endblock %}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ copy.site_name }}{% endblock %} · {{ badge }}</title>
+<link rel="stylesheet" href="/static/site.css">
+<script src="/static/signer.js" defer></script>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <nav>
+      <a class="brand" href="/">{{ copy.site_name }} <span class="badge {{ badge }}">{{ badge }}</span></a>
+      <a href="/proposals">{{ copy.labels.proposals }}</a>
+      <a href="/decisions">{{ copy.labels.decisions }}</a>
+      <a href="/seats">{{ copy.labels.seats }}</a>
+      <a href="/inbox">Inbox</a>
+      <a href="/log">{{ copy.labels.log }}</a>
+      <a href="/records">{{ copy.labels.records }}</a>
+      <a href="/v1" class="mute small">API</a>
+    </nav>
+  </div>
+</header>
+{% if paused %}
+<div class="banner"><div class="wrap">Paused since {{ paused.started_at|ns }}. {{ paused.post_text if paused.posted_at else "A note follows shortly." }} Reads and the log stay up.</div></div>
+{% endif %}
+<main><div class="wrap">
+{% block content %}{% endblock %}
+</div></main>
+<footer><div class="wrap row">
+  <span>{{ copy.footer }}</span>
+  <span>·</span><span>{{ network_id }}</span>
+  <span>·</span><span>v{{ version }}</span>
+  <span>·</span><a href="/v1/log/head">log head {{ head.hash|short if head else "" }}</a>
+  <span>·</span><a href="https://github.com/xeprotocol/dao">source</a>
+</div></footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

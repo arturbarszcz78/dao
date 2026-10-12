@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ copy.labels.decisions }}{% endblock %}
+{% block content %}
+<h1>{{ copy.labels.decisions }}</h1>
+<p class="sub">What the DAO did with each closed vote, and why. {{ copy.labels.not_self_executing }}</p>
+
+<h2>{{ copy.labels.decision_pending }} ({{ closed|length }})</h2>
+<table><tr><th>Proposal</th><th>Result</th><th>Closed</th></tr>
+{% for p in closed %}<tr><td><a href="/proposals/{{ p.hash }}">{{ p.title }}</a></td><td><span class="pill {{ p.result.outcome }}">{{ p.result.outcome.replace('_',' ') }}</span> · {{ p.result.participating_wallets }}/{{ p.result.quorum_wallets }} wallets</td><td class="num">{{ p.closes_at|ns }}</td></tr>
+{% else %}<tr><td colspan="3" class="mute">None.</td></tr>{% endfor %}</table>
+
+<h2>{{ copy.labels.decision_taken }} ({{ decided|length }})</h2>
+<table><tr><th>Proposal</th><th>Result</th><th>Decision</th><th>Reasons</th></tr>
+{% for p in decided %}<tr><td><a href="/proposals/{{ p.hash }}">{{ p.title }}</a></td><td><span class="pill {{ p.result.outcome }}">{{ p.result.outcome.replace('_',' ') }}</span></td><td><b>{{ p.decision.decision }}</b></td><td class="small">{{ p.decision.reasons }}</td></tr>
+{% else %}<tr><td colspan="4" class="mute">None yet.</td></tr>{% endfor %}</table>
+{% endblock %}
