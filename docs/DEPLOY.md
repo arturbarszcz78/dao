@@ -71,8 +71,10 @@ The keyfile holds the `harness` (signs the log), `dao` (chat, directory) and `fe
 
 ```sh
 mkdir -p secrets && chmod 700 secrets
-docker compose run --rm --no-deps -v $PWD/secrets:/app/secrets app dao keys init
+docker compose run --rm --no-deps -v $PWD/secrets:/keys app dao keys init --path /keys/signer.json
 ```
+
+The service's own `/app/secrets` mount is read-only and a `-v` on `run` does not replace it, hence the separate writable mount; the running services read the same file as `/app/secrets/signer.json`. Later `dao keys add|show` commands follow the same pattern with `--path /keys/signer.json`.
 
 It prints three accounts. Put the `dao` and `fee` accounts into `config/schedule_c.yaml` under `accounts:` (the registry and the manifest read them from the signer anyway; the config copy is the public record). Back the keyfile up somewhere offline; `dao keys show` lists keys without revealing seeds.
 
