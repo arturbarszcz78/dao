@@ -82,6 +82,8 @@ async def open_registry(req: SignedRequest, ctx: Ctx, db: Db):
 @router.post("/sessions/anchor", status_code=201)
 async def open_anchor(req: SignedRequest, ctx: Ctx, db: Db):
     v = require_seat(verify_signed(req, DOMAIN_MEMBER_ACTION), ctx.config)
+    if await pause_svc.is_paused(db):
+        raise HTTPException(409, "paused")
     out = await records.open_anchor_session(ctx, db, v.actor)
     await db.commit()
     return out

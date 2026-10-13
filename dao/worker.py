@@ -89,19 +89,21 @@ class Worker:
             if closed:
                 log.info("closed %d proposals", len(closed))
             await pause.tick(self.ctx, db)
-            # promote timelocked sessions whose clock has run
+            # promote approved sessions whose timelock has run, once no pause is in force
             now = time.time_ns()
-            rows = (await db.execute(select(SigningSession).where(SigningSession.status == "approving"))).scalars().all()
-            for s in rows:
-                if len(s.approvals) >= s.required_approvals and (not s.not_before or now >= s.not_before):
-                    await sessions.rebuild(self.ctx, db, s)
+            if not await pause.is_paused(db):
+                rows = (await db.execute(select(SigningSession).where(SigningSession.status == "approving"))).scalars().all()
+                for s in rows:
+                    if len(s.approvals) >= s.required_approvals and (not s.not_before or now >= s.not_before):
+                        await sessions.rebuild(self.ctx, db, s)
             await mark_run(db, "timers")
             await db.commit()
 
     async def job_sessions(self):
         """If a signing session's block is stale and nobody has signed it yet, rebuild quietly."""
         async with session() as db:
-            rows = (await db.execute(select(SigningSession).where(SigningSession.status == "signing"))).scalars().all()
+            paused = await pause.is_paused(db)
+            rows = [] if paused else (await db.execute(select(SigningSession).where(SigningSession.status == "signing"))).scalars().all()
             for s in rows:
                 try:
                     if not s.block_signatures and await sessions.is_stale(self.ctx, s):

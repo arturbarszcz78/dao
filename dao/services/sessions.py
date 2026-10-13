@@ -27,6 +27,7 @@ from ..auth import Verified
 from ..canonical import canonical_json, sha256_hex
 from ..context import Context
 from ..models import SigningSession
+from . import pause
 
 KINDS = {"registry", "anchor", "parameter", "keyset"}
 
@@ -57,6 +58,13 @@ def _block_from_session(s: SigningSession) -> StateBlock:
                      timestamp=int(s.block["timestamp"]), signatures=list(s.block_signatures))
     blk.hash = s.block_hash
     return blk
+
+
+async def require_unpaused(db: AsyncSession) -> None:
+    """Approving a session is record-keeping and stays open during a pause; building, signing and
+    submitting a block are the company acting on the chain and stop. Lifted pauses release them."""
+    if await pause.is_paused(db):
+        raise HTTPException(409, "paused: no state-chain block is built, signed or submitted while a pause is active")
 
 
 async def live_keyset(ctx: Context) -> dict:
@@ -121,8 +129,8 @@ async def approve(ctx: Context, db: AsyncSession, s: SigningSession, v: Verified
     }, ref=f"session:{s.id}")
     if len(s.approvals) >= ks["threshold"]:
         now = time.time_ns()
-        if s.not_before and now < s.not_before:
-            # timelock: stay in approving until the clock allows; worker promotes it
+        if (s.not_before and now < s.not_before) or await pause.is_paused(db):
+            # timelock or pause: stay in approving; the worker's timer job promotes it when clear
             return s
         await rebuild(ctx, db, s, actor="harness")
     return s
@@ -130,6 +138,7 @@ async def approve(ctx: Context, db: AsyncSession, s: SigningSession, v: Verified
 
 async def rebuild(ctx: Context, db: AsyncSession, s: SigningSession, actor: str = "harness") -> SigningSession:
     """Build (or re-build) the block at the live tip. Resets block signatures."""
+    await require_unpaused(db)
     try:
         tip = await ctx.chain.statechain_tip()
     except XeError as e:
@@ -154,6 +163,7 @@ async def sign(ctx: Context, db: AsyncSession, s: SigningSession, pub_key: str, 
     """Collect a raw ed25519 signature over the block hash from a keyset key. Submit when enough."""
     if s.status != "signing":
         raise HTTPException(409, f"session is {s.status}, not signing")
+    await require_unpaused(db)
     pub_key = pub_key.lower()
     ks = await live_keyset(ctx)
     if pub_key not in ks["keys"]:
@@ -186,6 +196,7 @@ async def is_stale(ctx: Context, s: SigningSession) -> bool:
 
 
 async def submit(ctx: Context, db: AsyncSession, s: SigningSession) -> SigningSession:
+    await require_unpaused(db)
     blk = _block_from_session(s)
     try:
         await ctx.chain.submit_statechain_block(blk)

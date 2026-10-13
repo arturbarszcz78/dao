@@ -3,8 +3,10 @@
 One member may pause for 72 hours on a written determination naming a ground. Both members may
 extend by 7 days at a time. A public post is due within 4 hours; the harness drafts it in the
 members' plain words and publishes it automatically at the deadline if nobody has edited it.
-While paused: no outbound chat, no fee movements, no new signing sessions, no agent output.
-Reads, the log, and the portal's vote intake stay up.
+While paused: no outbound chat, no fee movements, no state-chain block built, signed or submitted,
+no new registry or anchor sessions, no agent output. Reads, the log, the portal's vote intake and
+session approvals (record-keeping) stay up. A pause is the company suspending its own operations;
+it does not touch the chain.
 """
 
 from __future__ import annotations
