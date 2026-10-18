@@ -6,6 +6,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -140,6 +141,14 @@ async def seat_page(request: Request, slug: str):
     return render(request, "seat.html", ctx)
 
 
+@router.get("/how-it-works", response_class=HTMLResponse)
+async def how_page(request: Request):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+    return render(request, "how.html", {**common, "cfg": c.config})
+
+
 @router.get("/decisions", response_class=HTMLResponse)
 async def decisions_page(request: Request):
     async with session() as db:
@@ -147,6 +156,17 @@ async def decisions_page(request: Request):
         decided = await portal.list_proposals(db, "decided", 0, 100)
         closed = await portal.list_proposals(db, "closed", 0, 100)
     return render(request, "decisions.html", {**common, "decided": decided, "closed": closed})
+
+
+@router.get("/decisions/example", response_class=HTMLResponse)
+async def decision_record_example(request: Request):
+    """The worked example in config/examples; the shape every real record will have once seats are on."""
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+    with (c.config.dir / "examples" / "decision_record.yaml").open("r", encoding="utf-8") as f:
+        record = yaml.safe_load(f)
+    return render(request, "decision_record.html", {**common, "r": record})
 
 
 @router.get("/log", response_class=HTMLResponse)
