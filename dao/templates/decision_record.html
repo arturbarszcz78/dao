@@ -16,7 +16,7 @@
 </div>
 {% endmacro %}
 {% block content %}
-{% if r.example %}<div class="banner" style="margin:-28px -20px 20px;border-bottom:1px solid var(--line)"><div class="wrap">This is a <b>worked example</b>. No agent seat is switched on yet; this page shows the shape every real record will have. Names, numbers and hashes are invented.</div></div>{% endif %}
+{% if r.example %}<div class="notice">This is a <b>worked example</b>. No agent seat is switched on yet; this page shows the shape every real record will have. Names, numbers and hashes are invented.</div>{% endif %}
 <p class="small"><a href="/decisions">{{ copy.labels.decisions }}</a> / record {{ r.record_id }}</p>
 <h1>{{ r.item.title }}</h1>
 <p class="sub">Decision record · {{ r.item.kind }} <code>{{ r.item.ref }}</code> · produced {{ r.produced_at }} · path: {{ r.item.path }}</p>

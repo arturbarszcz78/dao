@@ -50,6 +50,8 @@ labels:
   testnet_badge: testnet
   mainnet_badge: mainnet
 footer: XE Network
+footer_line: Governance for the agent-native network, done in the open.
+kicker: Governance              # the small mono label above the headline
 faq:
   - q: How is XE governed?
     a: >-
