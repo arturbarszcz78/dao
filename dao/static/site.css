@@ -40,3 +40,10 @@ footer { border-top:1px solid var(--line); color:var(--mute); font-size:13px; pa
 .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .small { font-size:13px; }
 .num { font-variant-numeric: tabular-nums; }
+.prose { max-width: 760px; }
+.prose h2 { font-size:17px; margin:26px 0 8px; } .prose h3 { font-size:15px; }
+.prose p, .prose li { font-size:15px; line-height:1.6; } .prose ul, .prose ol { padding-left:22px; }
+.prose blockquote { margin:0; padding-left:14px; border-left:3px solid var(--line); color:var(--mute); }
+.doc { border:1px solid var(--line); border-radius:8px; padding:4px 20px 12px; }
+dl.facts { display:grid; grid-template-columns: max-content 1fr; gap:6px 18px; font-size:14px; margin:0 0 8px; }
+dl.facts dt { color:var(--mute); } dl.facts dd { margin:0; }

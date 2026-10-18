@@ -76,11 +76,14 @@ async def seats(ctx: Ctx):
     return {
         "mode": ctx.config.mode,
         "people": [{"id": s.id, "name": s.name, "role": s.role, "public_key": s.public_key or None,
-                    "account": s.account or None} for s in ctx.config.human_seats],
-        "agents": [{"id": a.id, "role": a.role, "class": a.cls, "status": a.status, "model": a.model or None,
-                    "account": a.account or None, "tool_scopes": list(a.tool_scopes),
+                    "account": s.account or None,
+                    "page": f"{ctx.settings.public_base_url}/seats/{s.slug}"} for s in ctx.config.human_seats],
+        "agents": [{"id": a.id, "role": a.role, "summary": a.summary, "class": a.cls, "status": a.status,
+                    "model": a.model or None, "account": a.account or None, "tool_scopes": list(a.tool_scopes),
                     "prompt_hash": ctx.config.prompt_hash(a.id) or None,
-                    "prompt": f"{ctx.settings.public_base_url}/v1/seats/{a.id}/prompt"} for a in ctx.config.agent_seats],
+                    "prompt": f"{ctx.settings.public_base_url}/v1/seats/{a.id}/prompt",
+                    "page": f"{ctx.settings.public_base_url}/seats/{a.slug}"} for a in ctx.config.agent_seats],
+        "tool_scopes": ctx.config.tool_scope_glossary,
         "preamble_hash": ctx.config.hashes.get("prompts/_preamble.md"),
         "note": "prompt_hash = sha256(preamble + seat prompt); recorded on every analysis a seat produces",
     }

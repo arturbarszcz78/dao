@@ -6,10 +6,10 @@
 
 <h2>People</h2>
 <table><tr><th>Seat</th><th>Name</th><th>Role</th><th>Public key</th><th>Account</th></tr>
-{% for s in cfg.human_seats %}<tr><td>{{ s.id }}</td><td>{{ s.name }}</td><td>{{ s.role }}</td><td><code>{{ s.public_key or "not yet published" }}</code></td><td><code>{{ s.account or "" }}</code></td></tr>{% endfor %}</table>
+{% for s in cfg.human_seats %}<tr><td><a href="/seats/{{ s.slug }}">{{ s.id }}</a></td><td>{{ s.name }}</td><td>{{ s.role }}</td><td><code>{{ s.public_key or "not yet published" }}</code></td><td><code>{{ s.account or "" }}</code></td></tr>{% endfor %}</table>
 
 <h2>Agents</h2>
-<table><tr><th>Seat</th><th>Role</th><th>Class</th><th>Status</th><th>Model</th><th>Account</th><th>Tools</th><th>Prompt</th></tr>
-{% for a in cfg.agent_seats %}<tr><td>{{ a.id }}</td><td>{{ a.role }}{% if a.optional %} <span class="pill">optional</span>{% endif %}</td><td>{{ a.cls }}</td><td><span class="pill">{{ a.status }}</span></td><td>{{ a.model or "—" }}</td><td><code>{{ a.account or "—" }}</code></td><td class="small">{{ a.tool_scopes|join(", ") }}</td><td>{% if cfg.prompt_hash(a.id) %}<a href="/v1/seats/{{ a.id }}/prompt"><code>{{ cfg.prompt_hash(a.id)|short(10) }}</code></a>{% else %}—{% endif %}</td></tr>{% endfor %}</table>
-<p class="small mute">Agents vote with a bounded weight ({{ cfg.open_vote.agents.stipend_micro_xe|xe }} XE per seat, at most {{ (cfg.open_vote.agents.max_weight_share * 100)|int }}% of weight cast) and never count toward quorum. Every seat's instructions are public and hashed; the hash is recorded on everything the seat produces. The shared preamble every seat is given: <a href="/v1/seats/orchestrator/prompt">read it</a>.</p>
+<table><tr><th>Role</th><th>What it does</th><th>Class</th><th>Status</th><th>Model</th><th>Instructions</th></tr>
+{% for a in cfg.agent_seats %}<tr><td><a href="/seats/{{ a.slug }}">{{ a.role }}</a>{% if a.optional %} <span class="pill">optional</span>{% endif %}</td><td class="small">{{ a.summary }}</td><td>{{ a.cls }}</td><td><span class="pill">{{ a.status }}</span></td><td>{{ a.model or "—" }}</td><td>{% if cfg.prompt_hash(a.id) %}<a href="/seats/{{ a.slug }}#instructions"><code>{{ cfg.prompt_hash(a.id)|short(10) }}</code></a>{% else %}—{% endif %}</td></tr>{% endfor %}</table>
+<p class="small mute">Agents vote with a bounded weight ({{ cfg.open_vote.agents.stipend_micro_xe|xe }} XE per seat, at most {{ (cfg.open_vote.agents.max_weight_share * 100)|int }}% of weight cast) and never count toward quorum. Every seat's instructions are public and hashed; the hash is recorded on everything the seat produces. Each role page carries the full text, what the seat may use, and the shared preamble every seat is given first.</p>
 {% endblock %}

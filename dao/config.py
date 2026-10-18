@@ -26,6 +26,11 @@ def _load_yaml(path: Path) -> Any:
         return yaml.safe_load(f) or {}
 
 
+def slugify(text: str) -> str:
+    """'Legal & Compliance' -> 'legal-and-compliance'; used for seat page URLs."""
+    return re.sub(r"[^a-z0-9]+", "-", text.lower().replace("&", " and ")).strip("-")
+
+
 @dataclass(frozen=True)
 class HumanSeat:
     id: str
@@ -34,6 +39,10 @@ class HumanSeat:
     role: str
     public_key: str
     may: tuple[str, ...]
+
+    @property
+    def slug(self) -> str:
+        return self.id  # roles repeat between people (two founders); the id is the stable handle
 
     @property
     def account(self) -> str:
@@ -57,6 +66,11 @@ class AgentSeat:
     account: str
     tool_scopes: tuple[str, ...]
     optional: bool = False
+    summary: str = ""
+
+    @property
+    def slug(self) -> str:
+        return slugify(self.role)
 
 
 @dataclass
@@ -96,8 +110,24 @@ class Config:
                 id=s["id"], role=s.get("role", ""), cls=s.get("class", "specialist"), status=s.get("status", "designed"),
                 model=s.get("model", "") or "", account=(s.get("account") or "").lower(),
                 tool_scopes=tuple(s.get("tool_scopes", [])), optional=bool(s.get("optional", False)),
+                summary=" ".join((s.get("summary") or "").split()),
             ))
         return out
+
+    def seat_page(self, slug: str) -> tuple[str, HumanSeat | AgentSeat] | None:
+        """Resolve a /seats/{slug} path: agent role slug or seat id, or a human seat id."""
+        slug = slug.lower()
+        for a in self.agent_seats:
+            if slug in (a.slug, a.id):
+                return "agent", a
+        for h in self.human_seats:
+            if slug == h.id:
+                return "human", h
+        return None
+
+    @property
+    def tool_scope_glossary(self) -> dict[str, str]:
+        return {k: str(v) for k, v in (self.schedule_c.get("tool_scopes") or {}).items()}
 
     def seat_by_key(self, public_key: str) -> HumanSeat | None:
         pk = public_key.lower()

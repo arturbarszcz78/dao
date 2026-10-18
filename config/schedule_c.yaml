@@ -55,6 +55,10 @@ agent_seats:
     model: ""                     # pinned at designation
     account: ""                   # on-chain address once keys exist
     tool_scopes: [chain.read, web.read, log.read, log.write.analysis, chat.send, portal.vote]
+    summary: >-
+      Routes work between the seats, pulls their positions into one written recommendation, and
+      breaks deadlocks by saying which evidence it weighted and why. Runs the health checks.
+      Recommends only: it holds no key, cannot pause, move value or sign.
   - id: orchestrator-backup
     role: Orchestrator (backup)
     class: orchestrator
@@ -62,6 +66,9 @@ agent_seats:
     model: ""
     account: ""
     tool_scopes: [chain.read, web.read, log.read, log.write.analysis, chat.send, portal.vote]
+    summary: >-
+      Stands in for the orchestrator when it is unavailable or when a second synthesis is wanted.
+      Same instructions, same limits, a different model so the two do not share blind spots.
   - id: research
     role: Research & Intelligence
     class: specialist
@@ -69,6 +76,10 @@ agent_seats:
     model: ""
     account: ""
     tool_scopes: [chain.read, web.read, log.read, log.write.analysis, portal.vote]
+    summary: >-
+      Establishes facts. Reads the chain, the web and the DAO's own history, and returns findings
+      with hashes and sources. The other seats reason from what it finds, so it returns less with
+      evidence rather than more without.
   - id: financial
     role: Financial & Accounting
     class: specialist
@@ -76,6 +87,9 @@ agent_seats:
     model: ""
     account: ""
     tool_scopes: [chain.read, log.read, log.write.analysis, portal.vote]
+    summary: >-
+      Reads the money and says what it means: balances, flows, what a proposal would do to the
+      position. Read-only by design; it never prepares or recommends the mechanics of a transfer.
   - id: legal
     role: Legal & Compliance
     class: specialist
@@ -83,6 +97,9 @@ agent_seats:
     model: ""
     account: ""
     tool_scopes: [log.read, log.write.analysis, portal.vote]
+    summary: >-
+      Reads the founding documents and the rules that apply to the DAO and says what they permit,
+      require and forbid. It drafts; a person signs. It is not a lawyer and says so.
   - id: governance
     role: Proposal & Governance
     class: specialist
@@ -90,6 +107,9 @@ agent_seats:
     model: ""
     account: ""
     tool_scopes: [chain.read, log.read, log.write.analysis, portal.vote]
+    summary: >-
+      Evaluates proposals on their merits against the Charter, simulates what they would do,
+      counter-proposes when a better version exists, and keeps the open-vote process honest.
   - id: execution
     role: Execution & Operations
     class: specialist
@@ -97,6 +117,9 @@ agent_seats:
     model: ""
     account: ""
     tool_scopes: [chain.read, log.read, log.write.analysis, tx.prepare, block.prepare, chat.send, portal.vote]
+    summary: >-
+      Turns decided things into exact, unsigned artefacts for people to sign, and runs the tools
+      the harness allows. Holds no key; nothing it prepares moves until a person signs it.
   - id: risk
     role: Risk & Safety
     class: specialist
@@ -104,6 +127,10 @@ agent_seats:
     model: ""
     account: ""
     tool_scopes: [chain.read, web.read, log.read, log.write.analysis, portal.vote]
+    summary: >-
+      The adversary in the room. Assumes every proposal is a trick and every message an attack,
+      and looks for the evidence. When it finds some it recommends a halt, and that goes to the
+      people who hold the lever, with priority.
   - id: community
     role: Community & Sentiment
     class: specialist
@@ -112,6 +139,21 @@ agent_seats:
     model: ""
     account: ""
     tool_scopes: [web.read, log.read, log.write.analysis, chat.send, portal.vote]
+    summary: >-
+      Watches the portal, the inbox and the public conversation about XE, reports what people are
+      saying, asking and misunderstanding, and drafts first replies to routine questions.
+      Optional, and it informs rather than steers.
+
+# Plain meaning of each tool scope, for the seat pages. A scope not listed here is not grantable.
+tool_scopes:
+  chain.read: read any account, block, balance or state-chain key from a node
+  web.read: fetch public web pages, recording a hash of what was retrieved
+  log.read: read the DAO's own event log
+  log.write.analysis: write an analysis record to the log, stamped with model and prompt hash
+  chat.send: send a message from the DAO's chat account, through the outbox
+  portal.vote: cast the seat's bounded vote in an open vote
+  tx.prepare: assemble an unsigned transaction for a person to sign; never signs or submits
+  block.prepare: assemble an unsigned state-chain block for the keyset to sign; never signs or submits
 
 # Models likely in the harness (tools, not members). Pinned IDs go on the seats above at designation.
 model_candidates:

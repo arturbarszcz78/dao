@@ -9,6 +9,8 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from markdown_it import MarkdownIt
+from markupsafe import Markup
 
 from xe.amounts import from_micro
 from xe.client import XeError
@@ -38,6 +40,15 @@ def _short(h: str | None, n: int = 10) -> str:
 templates.env.filters["ns"] = _fmt_ns
 templates.env.filters["short"] = _short
 templates.env.filters["xe"] = lambda v: from_micro(int(v or 0))
+
+_md = MarkdownIt("commonmark")  # config-authored markdown only (prompts, charter); never user input
+
+
+def _render_md(text: str | None) -> Markup:
+    return Markup(_md.render(text or ""))
+
+
+templates.env.filters["md"] = _render_md
 
 
 def render(request: Request, name: str, ctx: dict, status_code: int = 200) -> HTMLResponse:
@@ -102,6 +113,31 @@ async def seats_page(request: Request):
     async with session() as db:
         common = await _common(db)
     return render(request, "seats.html", {**common, "cfg": c.config})
+
+
+@router.get("/seats/{slug}", response_class=HTMLResponse)
+async def seat_page(request: Request, slug: str):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+    hit = c.config.seat_page(slug)
+    if hit is None:
+        return render(request, "error.html", {**common, "status": 404, "detail": "no such seat"}, status_code=404)
+    kind, seat = hit
+    ctx: dict = {**common, "cfg": c.config, "kind": kind, "seat": seat, "glossary": c.config.tool_scope_glossary}
+    if kind == "agent":
+        body = c.config.prompts.get(seat.id, "")
+        # drop the "# Seat: ..." title line; the page supplies its own heading
+        lines = body.split("\n")
+        if lines and lines[0].startswith("# "):
+            body = "\n".join(lines[1:]).lstrip("\n")
+        ctx.update({
+            "prompt_md": body, "preamble_md": c.config.prompts.get("_preamble", ""),
+            "prompt_hash": c.config.prompt_hash(seat.id),
+            "preamble_hash": c.config.hashes.get("prompts/_preamble.md", ""),
+            "seat_prompt_hash": c.config.hashes.get(f"prompts/{seat.id}.md", ""),
+        })
+    return render(request, "seat.html", ctx)
 
 
 @router.get("/decisions", response_class=HTMLResponse)

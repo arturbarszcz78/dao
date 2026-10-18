@@ -137,6 +137,24 @@ def test_every_agent_seat_has_a_prompt_and_hashes_are_published():
     assert cfg.prompt_hash("risk") != cfg.prompt_hash("legal")
 
 
+def test_seat_pages_resolve_and_summaries_pass_copy_lint():
+    cfg = load_config(ROOT / "config")
+    assert cfg.seat_page("legal-and-compliance")[1].id == "legal"
+    assert cfg.seat_page("legal")[1].id == "legal"
+    assert cfg.seat_page("orchestrator-backup")[1].id == "orchestrator-backup"
+    assert cfg.seat_page("founder-a")[0] == "human"
+    assert cfg.seat_page("nope") is None
+    slugs = [a.slug for a in cfg.agent_seats]
+    assert len(slugs) == len(set(slugs)), "agent role slugs must be unique"
+    glossary = cfg.tool_scope_glossary
+    for a in cfg.agent_seats:
+        assert a.summary, f"{a.id} needs a summary in schedule_c.yaml"
+        for sc in a.tool_scopes:
+            assert sc in glossary, f"tool scope {sc} has no plain-language entry"
+    # summaries and the glossary are public-register text
+    assert lint_public_copy(cfg, [a.summary for a in cfg.agent_seats] + list(glossary.values())) == []
+
+
 def test_registry_value_is_compact_and_small():
     from xe.statechain import compact_json
     from dao.services.records import registry_value
