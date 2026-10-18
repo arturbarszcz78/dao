@@ -52,6 +52,7 @@ labels:
 footer: XE Network
 footer_line: Governance for the agent-native network, done in the open.
 kicker: Governance              # the small mono label above the headline
+punchline: Proposed in the open. Analysed by agents. Signed by keys.   # the mono orange line under the statement
 faq:
   - q: How is XE governed?
     a: >-

@@ -1,8 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="tag">{{ copy.kicker }}</div>
-<h1>{{ copy.headline }}</h1>
-<p class="sub">{{ copy.sub }}</p>
+<div class="tag"><span>{{ copy.kicker }}</span></div>
+<div class="statement">
+  <div>
+    <h1>{{ copy.headline }}</h1>
+    <p>{{ copy.sub }}</p>
+    <p class="punch">{{ copy.punchline }}</p>
+  </div>
+</div>
 
 <div class="grid">
   {% for line in copy.lines %}<div class="card"><p style="margin:0">{{ line }}</p></div>{% endfor %}
