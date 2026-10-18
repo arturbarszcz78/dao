@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TPL = ROOT / "dao" / "templates"
 PUBLIC = ["home.html", "proposals.html", "proposal.html", "proposal_new.html", "seats.html", "decisions.html",
           "inbox.html", "log.html", "log_entry.html", "live.html", "seat.html", "how.html",
-          "decision_record.html", "base.html"]
+          "decision_record.html", "charter.html", "base.html"]
 
 
 def test_templates_parse():

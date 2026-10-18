@@ -15,7 +15,7 @@
   <tr><th>State-chain update authority</th><td><code>sys.dao_keyset</code> — <a href="{{ node_url }}/statechain/keyset">{{ node_url }}/statechain/keyset</a></td></tr>
   <tr><th>{{ legal.registry_label }}</th><td><code>dao.registry</code> — <a href="{{ node_url }}/statechain/kv/dao.registry">{{ node_url }}/statechain/kv/dao.registry</a> · {% if registry_onchain %}present{% else %}<b>not yet written</b>{% endif %}</td></tr>
   <tr><th>Software</th><td>v{{ version }} · commit <code>{{ git_commit }}</code> · <a href="{{ cfg.registry.repository }}">{{ cfg.registry.repository }}</a> · {{ cfg.registry.licence }}</td></tr>
-  <tr><th>Charter</th><td>sha256 <code>{{ cfg.charter_hash }}</code> · <a href="/v1/charter">text</a></td></tr>
+  <tr><th>Charter</th><td>sha256 <code>{{ cfg.charter_hash }}</code> · <a href="/charter">text</a> · <a href="/v1/charter">JSON</a></td></tr>
   <tr><th>Configuration hashes</th><td class="small">{% for k, v in cfg.hashes.items() %}{{ k }} <code>{{ v|short(16) }}</code><br>{% endfor %}</td></tr>
 </table>
 

@@ -57,6 +57,11 @@ faq:
       adopted changes onto the State Chain.
   - q: What can XE holders vote on?
     a: The levers and network parameters, in the open vote.
+  - q: What is the DAO run by?
+    a: >-
+      A published Charter, hashed and served at /charter, which sits beneath the law and the founding
+      agreement. It states the purpose, the principles, and the intent to hand more to the agent seats
+      over time, in stages, with people keeping what must be done by a person.
   - q: Consensus vs governance?
     a: >-
       Consensus settles a double-spend, weighted by delegated XE, only when an account contradicts itself.

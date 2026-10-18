@@ -141,6 +141,18 @@ async def seat_page(request: Request, slug: str):
     return render(request, "seat.html", ctx)
 
 
+@router.get("/charter", response_class=HTMLResponse)
+async def charter_page(request: Request):
+    c = get_context()
+    async with session() as db:
+        common = await _common(db)
+    body = c.config.charter_md
+    lines = body.split("\n")
+    if lines and lines[0].startswith("# "):
+        body = "\n".join(lines[1:]).lstrip("\n")
+    return render(request, "charter.html", {**common, "charter_md": body, "charter_hash": c.config.charter_hash})
+
+
 @router.get("/how-it-works", response_class=HTMLResponse)
 async def how_page(request: Request):
     c = get_context()

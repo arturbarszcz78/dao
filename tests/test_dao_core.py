@@ -137,6 +137,19 @@ def test_every_agent_seat_has_a_prompt_and_hashes_are_published():
     assert cfg.prompt_hash("risk") != cfg.prompt_hash("legal")
 
 
+def test_charter_keeps_its_legal_framing():
+    """The Charter is served verbatim and hashed; these lines are what the wrapper depends on."""
+    cfg = load_config(ROOT / "config")
+    text = " ".join(cfg.charter_md.split())
+    for must in (
+        "## Standing", "## Statement of Intent on Human Dissociation", "## Amendment Rules",
+        "natural-person control is permanent", "not self-executing", "confers no membership",
+        "is not a member, officer, manager or agent-at-law", "Reserved matters under the Operating Agreement",
+    ):
+        assert must in text, must
+    assert len(cfg.charter_hash) == 64
+
+
 def test_seat_pages_resolve_and_summaries_pass_copy_lint():
     cfg = load_config(ROOT / "config")
     assert cfg.seat_page("legal-and-compliance")[1].id == "legal"

@@ -9,7 +9,7 @@ pre { background:var(--soft); padding:12px; border-radius:6px; overflow:auto; wh
 header { border-bottom:1px solid var(--line); }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
 nav { display:flex; align-items:center; gap:18px; height:56px; flex-wrap:wrap; }
-nav .brand { font-weight:700; margin-right:auto; color:var(--fg); }
+nav .brand { font-weight:700; margin-right:auto; color:var(--fg); } nav .brand:hover { text-decoration:none; }
 .badge { display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--mute); vertical-align:middle; }
 .badge.testnet { border-color:var(--warn); color:var(--warn); }
 .badge.mainnet { border-color:var(--ok); color:var(--ok); }
