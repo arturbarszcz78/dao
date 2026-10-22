@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from markdown_it import MarkdownIt
 from markupsafe import Markup
@@ -20,6 +20,7 @@ from . import __version__
 from .context import get_context
 from .db import session
 from .log import EventLog, event_to_dict
+from .mirror import build_llms_txt, md_path
 from .services import inbox as inbox_svc
 from .services import pause as pause_svc
 from .services import portal, records, resolutions, sessions
@@ -41,6 +42,7 @@ def _short(h: str | None, n: int = 10) -> str:
 templates.env.filters["ns"] = _fmt_ns
 templates.env.filters["short"] = _short
 templates.env.filters["xe"] = lambda v: from_micro(int(v or 0))
+templates.env.filters["md_path"] = md_path
 
 _md = MarkdownIt("commonmark")  # config-authored markdown only (prompts, charter); never user input
 
@@ -65,6 +67,14 @@ def render(request: Request, name: str, ctx: dict, status_code: int = 200) -> HT
 async def _common(db):
     head = await EventLog.head(db)
     return {"paused": await pause_svc.active(db), "head": head}
+
+
+@router.get("/llms.txt", response_class=PlainTextResponse)
+async def llms_txt():
+    """The reading list for agents (llmstxt.org). Built from config, so it moves with the seats."""
+    c = get_context()
+    text = build_llms_txt(c.config, c.settings.public_base_url, c.node.network_id, c.config.mode)
+    return PlainTextResponse(text, media_type="text/plain; charset=utf-8")
 
 
 @router.get("/", response_class=HTMLResponse)

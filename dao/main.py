@@ -16,6 +16,7 @@ from .api import legal, members, public
 from .config import lint_public_copy
 from .context import get_context
 from .db import session
+from .mirror import MarkdownMirror
 from .ui import router as ui_router
 
 log = logging.getLogger("dao.app")
@@ -51,6 +52,8 @@ app.include_router(legal.router)
 app.include_router(members.router)
 app.include_router(ui_router)
 app.mount("/static", StaticFiles(directory=str(HERE / "static")), name="static")
+# every page as markdown: /x.md, /index.md, or Accept: text/markdown
+app.add_middleware(MarkdownMirror, base_url=lambda: get_context().settings.public_base_url)
 
 
 @app.exception_handler(StarletteHTTPException)

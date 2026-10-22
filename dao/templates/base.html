@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/static/site.css">
+<link rel="alternate" type="text/markdown" href="{{ request.url.path|md_path }}" title="This page as markdown">
 <script src="/static/signer.js" defer></script>
 </head>
 <body>
@@ -43,6 +44,8 @@
     <span>·</span><span>v{{ version }}</span>
     <span>·</span><a href="/charter">charter</a>
     <span>·</span><a href="/v1" >API</a>
+    <span>·</span><a href="{{ request.url.path|md_path }}">this page as markdown</a>
+    <span>·</span><a href="/llms.txt">llms.txt</a>
     <span>·</span><a href="/v1/log/head">log head {{ head.hash|short if head else "" }}</a>
     <span>·</span><a href="https://github.com/xeprotocol/dao">source</a>
     <span>·</span><a href="https://xe.network">xe.network</a>
