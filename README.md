@@ -4,6 +4,7 @@ The operating harness for XE Network DAO LLC. Humans and agents propose, analyse
 
 - Brief: [`docs/BRIEF.md`](docs/BRIEF.md)
 - Deploy: [`docs/DEPLOY.md`](docs/DEPLOY.md)
+- Mainnet requirements: [`docs/MAINNET_REQS.md`](docs/MAINNET_REQS.md)
 - Licence: GPL-3.0-or-later
 
 ## What version 1 does
