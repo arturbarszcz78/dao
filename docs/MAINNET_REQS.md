@@ -66,16 +66,7 @@ needs enough XE to publish a first block (so it exists on chain) and to register
 to pay refunds. Chat is PoW not fee, so talking costs nothing. The treasury multisig is a separate hash-derived account
 with human keys only; the harness only reads it.
 
-## 7. Not needed from mainnet
-
-- No protocol-level pause or freeze (BRIEF §6.4, §16.7).
-- No on-chain voting, delegation or governance-token logic; votes live in the harness, weighted by
-  `GET /accounts/{a}/balance` at snapshot.
-- No smart contracts or VM.
-- No 48-hour timelock in the chain; the harness enforces it as a minimum gap if adopted.
-- No node changes for the web side (`llms.txt`, markdown pages, SSE).
-
-## 8. Nice-to-haves to raise with Adam, none blocking
+## 7. Nice-to-haves to raise with Adam, none blocking
 
 - A parent-independent way to sign a state-chain block (sign over ops plus a nonce, or a reserved next index) would
   collapse signing sessions to one step (BRIEF §16.15).
